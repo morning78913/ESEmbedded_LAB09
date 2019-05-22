@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/stat.h>
 #include "reg.h"
 #include "blink.h"
 
@@ -142,29 +144,51 @@ void *_sbrk(int incr)
 	return (void *)prev_heap_end;
 }
 
+int _write(int file, char *ptr, int len)
+{
+	for (unsigned int i = 0; i < len; i++)
+		usart1_send_char(*ptr++);
+
+	return len;
+}
+
+int _close(int file)
+{
+	return -1;
+}
+
+int _lseek(int file, int ptr, int dir)
+{
+	return 0;
+}
+
+int _read(int file, char *ptr, int len)
+{
+	return 0;
+}
+
+int _fstat(int file, struct stat *st)
+{
+	st->st_mode = S_IFCHR;
+	return 0;
+}
+
+int _isatty(int file)
+{
+	return 1;
+}
+
 int main(void)
 {
 	init_usart1();
-/*
-	char *hello = "Hello world!\r\n";
 
-	//send Hello world
-	while (*hello != '\0')
-		usart1_send_char(*hello++);
-*/
-	char *ch = malloc(3 * sizeof(char));
-	if(ch != NULL)
-	{
-		ch[0] = 'A';
-		ch[1] = 'B';
-		ch[2] = 'C';
+    printf("Hello World\r\n");
 
-		usart1_send_char(ch[0]);
-		usart1_send_char(ch[1]);
-		usart1_send_char(ch[2]);
+    int i = 75;
 
-		free(ch);
-	}
+    printf("Decimal: %d  Hexadecimal: 0x%x \r\n", i, i);
+
+    printf("Character: %c\r\n", i);
 
 	//Blink LED forever
 	blink(LED_BLUE);
