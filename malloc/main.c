@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include "reg.h"
 #include "blink.h"
 
@@ -123,15 +124,47 @@ void usart1_handler(void)
 	}
 }
 
+#define HEAP_MAX (64 * 1024) //64 KB
+void *_sbrk(int incr)
+{
+	extern uint8_t _mybss_vma_end; //Defined by the linker script
+	static uint8_t *heap_end = NULL;
+	uint8_t *prev_heap_end;
+
+	if (heap_end == NULL)
+		heap_end = &_mybss_vma_end;
+
+	prev_heap_end = heap_end;
+	if (heap_end + incr > &_mybss_vma_end + HEAP_MAX)
+		return (void *)-1;
+
+	heap_end += incr;
+	return (void *)prev_heap_end;
+}
+
 int main(void)
 {
 	init_usart1();
-
+/*
 	char *hello = "Hello world!\r\n";
 
 	//send Hello world
 	while (*hello != '\0')
 		usart1_send_char(*hello++);
+*/
+	char *ch = malloc(3 * sizeof(char));
+	if(ch != NULL)
+	{
+		ch[0] = 'A';
+		ch[1] = 'B';
+		ch[2] = 'C';
+
+		usart1_send_char(ch[0]);
+		usart1_send_char(ch[1]);
+		usart1_send_char(ch[2]);
+
+		free(ch);
+	}
 
 	//Blink LED forever
 	blink(LED_BLUE);
